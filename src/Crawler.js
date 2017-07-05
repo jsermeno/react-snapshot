@@ -1,7 +1,8 @@
 /* Loads a URL then starts looking for links.
  Emits a full page whenever a new link is found. */
-import url from 'url'
+import url, { URL } from 'url'
 import path from 'path'
+import fs from 'fs'
 import jsdom from 'jsdom'
 import glob from 'glob-to-regexp'
 import snapshot from './snapshot'
@@ -16,6 +17,7 @@ export default class Crawler {
     this.exclude = options.exclude.map((g) => glob(g, { extended: true, globstar: true}))
     this.processed = {}
     this.snapshotDelay = snapshotDelay
+    this.stripBundles = options.stripBundles
   }
 
   crawl(handler) {
@@ -35,7 +37,7 @@ export default class Crawler {
       this.processed[urlPath] = true
     }
     return snapshot(this.protocol, this.host, urlPath, this.snapshotDelay).then(window => {
-      const html = jsdom.serializeDocument(window.document)
+      const html = jsdom.serializeDocument(this.stripScripts(window.document))
       this.extractNewLinks(window, urlPath)
       this.handler({ urlPath, html })
       window.close() // Release resources used by jsdom
@@ -43,6 +45,19 @@ export default class Crawler {
     }, err => {
       console.log(`🔥 ${err}`)
     })
+  }
+
+  stripScripts(document) {
+    if (!this.stripBundles) return document
+
+    const jsFiles = fs.readdirSync(path.resolve('./build/static/js'))
+    Array.from(document.querySelectorAll('script')).forEach(element => {
+      const srcUrl = new URL(element.src)
+      if (jsFiles.includes(path.basename(srcUrl.pathname))) {
+        element.remove()
+      }
+    })
+    return document
   }
 
   extractNewLinks(window, currentPath) {

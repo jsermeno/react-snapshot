@@ -12,7 +12,8 @@ export default () => {
   const options = Object.assign({
     include: [],
     exclude: [],
-    snapshotDelay: 50
+    snapshotDelay: 50,
+    stripBundles: false
   }, pkg.reactSnapshot || {})
 
   options.exclude = options.exclude.map((p) => path.join(basename, p).replace(/\\/g, '/'))
