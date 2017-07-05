@@ -13,12 +13,16 @@ export default () => {
     include: [],
     exclude: [],
     snapshotDelay: 50,
-    stripBundles: false
+    stripBundles: false,
+    stripBundlesInclude: [],
+    stripBundlesExclude: []
   }, pkg.reactSnapshot || {})
 
   options.exclude = options.exclude.map((p) => path.join(basename, p).replace(/\\/g, '/'))
   options.include = options.include.map((p) => path.join(basename, p).replace(/\\/g, '/'))
   options.include.unshift(basename)
+  options.stripBundlesExclude = options.stripBundlesExclude.map((p) => path.resolve(p))
+  options.stripBundlesInclude.unshift('./build/static/js')
 
   const buildDir = path.resolve('./build')
   const writer = new Writer(buildDir)

@@ -14,10 +14,16 @@ export default class Crawler {
     this.protocol = protocol
     this.host = host
     this.paths = [...options.include]
-    this.exclude = options.exclude.map((g) => glob(g, { extended: true, globstar: true}))
+
+    const expandGlob = g => glob(g, { extended: true, globstar: true })
+    this.exclude = options.exclude.map(expandGlob)
+    this.stripBundles = options.stripBundles
+    this.stripBundlesInclude = options.stripBundlesInclude
+    this.stripBundlesExclude = options.stripBundlesExclude.map(expandGlob)
     this.processed = {}
     this.snapshotDelay = snapshotDelay
-    this.stripBundles = options.stripBundles
+
+    this.stripScripts = this.stripScripts.bind(this)
   }
 
   crawl(handler) {
@@ -36,28 +42,48 @@ export default class Crawler {
     } else {
       this.processed[urlPath] = true
     }
-    return snapshot(this.protocol, this.host, urlPath, this.snapshotDelay).then(window => {
-      const html = jsdom.serializeDocument(this.stripScripts(window.document))
-      this.extractNewLinks(window, urlPath)
-      this.handler({ urlPath, html })
-      window.close() // Release resources used by jsdom
-      return this.snap()
-    }, err => {
-      console.log(`🔥 ${err}`)
-    })
+    const errFn = err => console.log(`🔥 ${err}`)
+    return snapshot(this.protocol, this.host, urlPath, this.snapshotDelay)
+      .then(this.stripScripts, errFn)
+      .then(window => {
+        const html = jsdom.serializeDocument(window.document)
+        this.extractNewLinks(window, urlPath)
+        this.handler({ urlPath, html })
+        window.close() // Release resources used by jsdom
+        return this.snap()
+      }, errFn)
   }
 
-  stripScripts(document) {
-    if (!this.stripBundles) return document
+  stripScripts(window) {
+    const document = window.document
+    if (!this.stripBundles) return window
 
-    const jsFiles = fs.readdirSync(path.resolve('./build/static/js'))
-    Array.from(document.querySelectorAll('script')).forEach(element => {
-      const srcUrl = new URL(element.src)
-      if (jsFiles.includes(path.basename(srcUrl.pathname))) {
-        element.remove()
-      }
+    const includePromises = this.stripBundlesInclude.map(includePath => {
+      return new Promise((resolve, reject) => {
+        const fullIncludePath = path.resolve(includePath)
+        fs.readdir(fullIncludePath, (err, files) => {
+          if (err) reject(err)
+          resolve(files.map(f => path.join(fullIncludePath, f)))
+        })
+      })
     })
-    return document
+
+    return Promise
+      .all(includePromises)
+      .then(filesList => {
+        const jsFiles = Array.prototype
+          .concat(...filesList)
+          .filter(x => this.stripBundlesExclude.filter(y => y.test(x)) == 0)
+          .map(p => path.basename(p))
+
+        Array.from(document.querySelectorAll('script')).forEach(element => {
+          const srcUrl = new URL(element.src)
+          if (jsFiles.includes(path.basename(srcUrl.pathname))) {
+            element.remove()
+          }
+        })
+        return window
+      })
   }
 
   extractNewLinks(window, currentPath) {

@@ -48,13 +48,18 @@ You can specify additional paths as entry points for crawling that would otherwi
       "/signup",
       "/other-path/exclude-me/**"
     ],
-    "snapshotDelay": 300
+    "snapshotDelay": 300,
+    "stripBundles": true,
+    "stripBundlesInclude": ["./build/static/other-path"]
+    "stripBundlesExclude": ["./build/other-path/exclude-me/**"]
   }
 ```
 
 Note that exclude can be passed a glob, but include cannot.
 
 The default snapshot delay is 50ms, and this can be changed to suit your app's requirements.
+
+You can also remove the bundle from the generated page by setting `stripBundles` to `true`. By the default this will remove all script tags pointing to files in the `./build/static/js` directory. You can customize this by using the `stripBundlesInclude` or `stripBundlesExclude` properties. `stripBundlesInclude` is a list of directories while `stripBundlesExclude` is a list of globs matching file names.
 
 ## The Demo
 
