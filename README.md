@@ -84,7 +84,7 @@ This is a hacky experiment at the moment. I would really like to see how far we 
 - [x] ~~Waiting on [pushstate-server#29](https://github.com/scottcorgan/pushstate-server/pull/29). Right now `pushstate-server` serves `200.html` _even if_ a HTML snapshot is present. So once you've run `react-snapshot`, you have to switch to `http-server` or `superstatic` to test if it worked. Or you could just push to [surge.sh](https://surge.sh) each time, which isn't too bad.~~
 - [x] ~~Is starting at `/` and crawling sufficient? Might there be unreachable sections of your site?~~
 - [x] ~~Should we exclude certain URLs? Maybe parse the `robots.txt` file?~~
-- [ ] What if you don't want the `200.html` pushstate fallback? What if you want to remove the bundle (effectively making this a static site generator)?
+- [ ] What if you don't want the `200.html` pushstate fallback? ~~What if you want to remove the bundle (effectively making this a static site generator)?~~
 - [ ] This doesn't pass down any state except what's contained in the markup. That feels ok for simple use-cases (you can always roll your own) but if you have a use-case where you need it and want zero-config raise an issue.
 - [x] #2 ~~I'm using a regexp to parse URLs out of the HTML because I wrote this on a flight with no wifi and couldn't NPM install anything. We should use a real parser. You should submit a PR to use a real parser. That would be real swell.~~
 - [ ] Should we clone the `build` directory to something like `snapshot` or `dist` instead of modifying it in-place?
