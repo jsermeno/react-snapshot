@@ -77,9 +77,11 @@ export default class Crawler {
           .map(p => path.basename(p))
 
         Array.from(document.querySelectorAll('script')).forEach(element => {
-          const srcUrl = new URL(element.src)
-          if (jsFiles.includes(path.basename(srcUrl.pathname))) {
-            element.remove()
+          if (element.src) {
+            const srcUrl = new URL(element.src)
+            if (jsFiles.includes(path.basename(srcUrl.pathname))) {
+              element.remove()
+            }
           }
         })
         return window
