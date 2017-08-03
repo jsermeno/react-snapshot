@@ -20,6 +20,7 @@ export default class Crawler {
     this.stripBundles = options.stripBundles
     this.stripBundlesInclude = options.stripBundlesInclude
     this.stripBundlesExclude = options.stripBundlesExclude.map(expandGlob)
+    this.options = options
     this.processed = {}
     this.snapshotDelay = snapshotDelay
 
@@ -43,7 +44,7 @@ export default class Crawler {
       this.processed[urlPath] = true
     }
     const errFn = err => console.log(`🔥 ${err}`)
-    return snapshot(this.protocol, this.host, urlPath, this.snapshotDelay)
+    return snapshot(this.protocol, this.host, urlPath, this.snapshotDelay, this.options)
       .then(this.stripScripts, errFn)
       .then(window => {
         const html = jsdom.serializeDocument(window.document)

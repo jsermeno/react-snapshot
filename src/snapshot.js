@@ -2,14 +2,20 @@
 
 import jsdom from 'jsdom'
 
-export default (protocol, host, path, delay) => {
+export default (protocol, host, path, delay, options) => {
   return new Promise((resolve, reject) => {
     let reactSnapshotRenderCalled = false
     jsdom.env({
       url: `${protocol}//${host}${path}`,
       headers: { Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8" },
       resourceLoader(resource, callback) {
-        if (resource.url.host === host) {
+        const skipPattern = options.skipScriptPaths
+          .map(x => (new RegExp(x)).test(resource.url.pathname))
+          .some(x => x);
+        
+        if (skipPattern) {
+          callback()
+        } else if (resource.url.host === host) {
           resource.defaultFetch(callback);
         } else {
           callback()
